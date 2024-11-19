@@ -18,13 +18,14 @@ import (
 // operations are implemented. When using the Fd from a *os.File, call
 // syscall.Dup() on the fd, to avoid os.File's finalizer from closing
 // the file descriptor.
-func NewLoopbackFile(fd int) FileHandle {
+func NewLoopbackFile(fd int, passthrough bool) FileHandle {
 	return &loopbackFile{fd: fd}
 }
 
 type loopbackFile struct {
-	mu sync.Mutex
-	fd int
+	mu          sync.Mutex
+	fd          int
+	passthrough bool
 }
 
 var _ = (FileHandle)((*loopbackFile)(nil))
@@ -46,13 +47,22 @@ func (f *loopbackFile) PassthroughFd() (int, bool) {
 	// This Fd is not accessed concurrently, but lock anyway for uniformity.
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.fd, true
+	if f.passthrough {
+		return f.fd, true
+	}
+	return -1, false
 }
 
 func (f *loopbackFile) Read(ctx context.Context, buf []byte, off int64) (res fuse.ReadResult, errno syscall.Errno) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	r := fuse.ReadResultFd(uintptr(f.fd), off, len(buf))
+	var r fuse.ReadResult
+	if f.passthrough {
+		r = fuse.ReadResultFd(uintptr(f.fd), off, len(buf))
+	} else {
+		n, _ := syscall.Read(f.fd, buf)
+		r = fuse.ReadResultFd(uintptr(f.fd), off, n)
+	}
 	return r, OK
 }
 

@@ -26,6 +26,8 @@ type LoopbackRoot struct {
 	// the underlying filesystem crosses file systems.
 	Dev uint64
 
+	Passthrough bool
+
 	// NewNode returns a new InodeEmbedder to be used to respond
 	// to a LOOKUP/CREATE/MKDIR/MKNOD opcode. If not set, use a
 	// LoopbackNode.
@@ -230,7 +232,7 @@ func (n *LoopbackNode) Create(ctx context.Context, name string, flags uint32, mo
 
 	node := n.RootData.newNode(n.EmbeddedInode(), name, &st)
 	ch := n.NewInode(ctx, node, n.RootData.idFromStat(&st))
-	lf := NewLoopbackFile(fd)
+	lf := NewLoopbackFile(fd, n.RootData.Passthrough)
 
 	out.FromStat(&st)
 	return ch, lf, 0, 0
@@ -339,7 +341,7 @@ func (n *LoopbackNode) Open(ctx context.Context, flags uint32) (fh FileHandle, f
 	if err != nil {
 		return nil, 0, ToErrno(err)
 	}
-	lf := NewLoopbackFile(f)
+	lf := NewLoopbackFile(f, n.RootData.Passthrough)
 	return lf, 0, 0
 }
 
@@ -504,7 +506,7 @@ func (n *LoopbackNode) CopyFileRange(ctx context.Context, fhIn FileHandle,
 // NewLoopbackRoot returns a root node for a loopback file system whose
 // root is at the given root. This node implements all NodeXxxxer
 // operations available.
-func NewLoopbackRoot(rootPath string) (InodeEmbedder, error) {
+func NewLoopbackRoot(rootPath string, passthrough bool) (InodeEmbedder, error) {
 	var st syscall.Stat_t
 	err := syscall.Stat(rootPath, &st)
 	if err != nil {
@@ -512,8 +514,9 @@ func NewLoopbackRoot(rootPath string) (InodeEmbedder, error) {
 	}
 
 	root := &LoopbackRoot{
-		Path: rootPath,
-		Dev:  uint64(st.Dev),
+		Path:        rootPath,
+		Dev:         uint64(st.Dev),
+		Passthrough: passthrough,
 	}
 
 	rootNode := root.newNode(nil, "", &st)

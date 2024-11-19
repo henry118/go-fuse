@@ -52,6 +52,7 @@ func main() {
 	directmountstrict := flag.Bool("directmountstrict", false, "like directmount, but don't fall back to fusermount")
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to this file")
 	memprofile := flag.String("memprofile", "", "write memory profile to this file")
+	passthrough := flag.Bool("passthrough", true, "enable fuse passthrough")
 	flag.Parse()
 	if flag.NArg() < 2 {
 		fmt.Printf("usage: %s MOUNTPOINT ORIGINAL\n", path.Base(os.Args[0]))
@@ -86,7 +87,7 @@ func main() {
 	}
 
 	orig := flag.Arg(1)
-	loopbackRoot, err := fs.NewLoopbackRoot(orig)
+	loopbackRoot, err := fs.NewLoopbackRoot(orig, *passthrough)
 	if err != nil {
 		log.Fatalf("NewLoopbackRoot(%s): %v\n", orig, err)
 	}
