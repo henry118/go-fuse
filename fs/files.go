@@ -6,6 +6,7 @@ package fs
 
 import (
 	"context"
+	"log"
 	"sync"
 	"syscall"
 
@@ -48,8 +49,10 @@ func (f *loopbackFile) PassthroughFd() (int, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.passthrough {
+		log.Println("Passthrough enabled")
 		return f.fd, true
 	}
+	log.Println("Passthrough disabled")
 	return -1, false
 }
 
@@ -58,8 +61,10 @@ func (f *loopbackFile) Read(ctx context.Context, buf []byte, off int64) (res fus
 	defer f.mu.Unlock()
 	var r fuse.ReadResult
 	if f.passthrough {
+		log.Println("Raading with passthrough")
 		r = fuse.ReadResultFd(uintptr(f.fd), off, len(buf))
 	} else {
+		log.Println("Reading from file")
 		n, _ := syscall.Read(f.fd, buf)
 		r = fuse.ReadResultFd(uintptr(f.fd), off, n)
 	}
