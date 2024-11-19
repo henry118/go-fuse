@@ -20,7 +20,7 @@ import (
 // syscall.Dup() on the fd, to avoid os.File's finalizer from closing
 // the file descriptor.
 func NewLoopbackFile(fd int, passthrough bool) FileHandle {
-	return &loopbackFile{fd: fd}
+	return &loopbackFile{fd: fd, passthrough: passthrough}
 }
 
 type loopbackFile struct {
