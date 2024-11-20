@@ -342,7 +342,7 @@ func (n *LoopbackNode) Open(ctx context.Context, flags uint32) (fh FileHandle, f
 		return nil, 0, ToErrno(err)
 	}
 	lf := NewLoopbackFile(f, n.RootData.Passthrough)
-	return lf, 0, 0
+	return lf, fuse.FOPEN_DIRECT_IO, 0
 }
 
 var _ = (NodeOpendirHandler)((*LoopbackNode)(nil))
