@@ -345,6 +345,7 @@ func (n *LoopbackNode) Open(ctx context.Context, flags uint32) (fh FileHandle, f
 	if flags&fuse.FOPEN_DIRECT_IO != 0 {
 		log.Println("DIRECT IO!!!")
 	}
+	log.Printf("flag=%v", flags)
 	lf := NewLoopbackFile(f, n.RootData.Passthrough)
 	return lf, fuse.FOPEN_DIRECT_IO, 0
 }
