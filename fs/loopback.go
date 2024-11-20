@@ -6,6 +6,7 @@ package fs
 
 import (
 	"context"
+	"log"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -340,6 +341,9 @@ func (n *LoopbackNode) Open(ctx context.Context, flags uint32) (fh FileHandle, f
 	f, err := syscall.Open(p, int(flags), 0)
 	if err != nil {
 		return nil, 0, ToErrno(err)
+	}
+	if flags&fuse.FOPEN_DIRECT_IO != 0 {
+		log.Println("DIRECT IO!!!")
 	}
 	lf := NewLoopbackFile(f, n.RootData.Passthrough)
 	return lf, fuse.FOPEN_DIRECT_IO, 0
