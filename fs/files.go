@@ -59,14 +59,7 @@ func (f *loopbackFile) PassthroughFd() (int, bool) {
 func (f *loopbackFile) Read(ctx context.Context, buf []byte, off int64) (res fuse.ReadResult, errno syscall.Errno) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	var r fuse.ReadResult
-	if f.passthrough {
-		log.Println("Read passthrough")
-		r = fuse.ReadResultFd(uintptr(f.fd), off, len(buf))
-	} else {
-		n, _ := syscall.Read(f.fd, buf)
-		r = fuse.ReadResultFd(uintptr(f.fd), off, n)
-	}
+	r := fuse.ReadResultFd(uintptr(f.fd), off, len(buf))
 	return r, OK
 }
 
